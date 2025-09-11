@@ -348,10 +348,19 @@ class Settings
                     'label' => 'Email Password',
                     'type' => 'password',
                     'required' => fn (Get $get) => $get('ticket_mail_piping'),
+                    'encrypted' => true,
                 ],
             ],
 
             'cronjob' => [
+                [
+                    'name' => 'cronjob_time',
+                    'label' => 'Cron Job Time',
+                    'type' => 'time',
+                    'default' => '00:00',
+                    'required' => true,
+                    'description' => 'Time the cron job should run daily (in 24 hour format, e.g. 14:00 for 2 PM).',
+                ],
                 [
                     'name' => 'cronjob_invoice',
                     'label' => 'Send invoice if due date is x days away',

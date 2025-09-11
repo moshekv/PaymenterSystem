@@ -84,7 +84,7 @@ class Pterodactyl extends Server
         }
 
         $eggList = [];
-        if (isset($values['nest_id'])) {
+        if (isset($values['nest_id']) && $values['nest_id'] !== '') {
             $eggs = $this->request('/api/application/nests/' . $values['nest_id'] . '/eggs');
             foreach ($eggs['data'] as $egg) {
                 $eggList[$egg['attributes']['id']] = $egg['attributes']['name'];
@@ -283,6 +283,10 @@ class Pterodactyl extends Server
             $returnData['created_user'] = true;
         }
 
+        if (isset($settings['location'])) {
+            $settings['location_ids'] = [$settings['location']];
+        }
+
         $deploymentData = $this->generateDeploymentData($settings, $environment);
 
         $serverCreationData = [
@@ -312,9 +316,7 @@ class Pterodactyl extends Server
         ];
         if ($deploymentData['auto_deploy']) {
             $serverCreationData['deploy'] = [
-                'locations' => isset($settings['location'])
-                    ? [$settings['location']]
-                    : (array) $settings['location_ids'],
+                'locations' => (array) $settings['location_ids'],
                 'dedicated_ip' => $settings['dedicated_ip'] ?? false,
                 'port_range' => $settings['port_range'] ?? [],
             ];

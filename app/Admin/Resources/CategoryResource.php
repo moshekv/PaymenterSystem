@@ -61,7 +61,13 @@ class CategoryResource extends Resource
                     ->label('Parent Category')
                     // Disallow having same category as it's own parent
                     ->disableOptionWhen(fn (string $value, ?Category $record): bool => $record && (int) $value === $record->id),
-                FileUpload::make('image')->label('Image')->nullable()->acceptedFileTypes(['image/*'])->columnSpanFull(),
+                FileUpload::make('image')
+                    ->label('Image')
+                    ->nullable()
+                    ->visibility('public')
+                    ->disk('public')
+                    ->acceptedFileTypes(['image/*'])
+                    ->columnSpanFull(),
             ])->columns(2);
     }
 
@@ -84,8 +90,8 @@ class CategoryResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()->before(function (DeleteBulkAction $action) {
-                        foreach ($action->getRecords() as $record) {
+                    DeleteBulkAction::make()->before(function (DeleteBulkAction $action, $records) {
+                        foreach ($records as $record) {
                             if ($record->products()->exists() || $record->children()->exists()) {
                                 Notification::make()
                                     ->title('Cannot delete category')

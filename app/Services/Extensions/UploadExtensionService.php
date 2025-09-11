@@ -6,9 +6,10 @@ use App\Attributes\ExtensionMeta;
 use App\Classes\Extension\Extension;
 use App\Classes\Extension\Gateway;
 use App\Classes\Extension\Server;
+use App\Console\Commands\Extension\Upgrade;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use ReflectionClass;
-use Symfony\Component\Process\Process;
 
 class UploadExtensionService
 {
@@ -18,7 +19,7 @@ class UploadExtensionService
      *
      * @return void
      */
-    public function handle(string $filePath)
+    public function handle(string $filePath): string
     {
         // Validate the file type and size
         if (!file_exists($filePath) || !is_readable($filePath)) {
@@ -51,7 +52,6 @@ class UploadExtensionService
         // Check if destination directory exists, if so, remove it
         if (is_dir($destinationPath)) {
             $updating = true;
-            File::deleteDirectory($destinationPath);
         }
 
         if ($updating) {
@@ -68,6 +68,7 @@ class UploadExtensionService
                     }
                 }
             }
+            File::deleteDirectory($destinationPath);
         }
 
         if (!rename($path, $destinationPath)) {
@@ -79,9 +80,14 @@ class UploadExtensionService
 
         // Execute the upgraded method if it exists
         if ($updating) {
-            Process::fromShellCommandline('php artisan app:extension:upgrade ' . $type['type'] . ' ' . $type['class'] . ' ' . ($oldVersion ?? ''))
-                ->run(function ($type, $output) {});
+            Artisan::call(Upgrade::class, [
+                'type' => $type['type'],
+                'name' => $type['class'],
+                'oldVersion' => $oldVersion,
+            ]);
         }
+
+        return $type['type'];
     }
 
     private function getExtensionType(string $path): array

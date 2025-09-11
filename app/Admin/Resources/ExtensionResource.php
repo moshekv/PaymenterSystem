@@ -7,6 +7,7 @@ use App\Admin\Resources\ExtensionResource\Pages\EditExtension;
 use App\Admin\Resources\ExtensionResource\Pages\ListExtensions;
 use App\Helpers\ExtensionHelper;
 use App\Models\Extension;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
@@ -75,6 +76,11 @@ class ExtensionResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
+            ])
+            ->headerActions([
+                Action::make('create')
+                    ->label('Install Extension')
+                    ->url(fn () => \App\Admin\Pages\Extension::getUrl(['tab' => 'installable'])),
             ]);
     }
 

@@ -79,7 +79,7 @@ class CronJob extends Command
                     'description' => $service->description,
                 ]);
 
-                $this->payInvoiceWithCredits($invoice);
+                $this->payInvoiceWithCredits($invoice->refresh());
             } catch (Exception $e) {
                 DB::rollBack();
                 $this->error('Error creating invoice for service ' . $service->id . ': ' . $e->getMessage());
@@ -101,6 +101,10 @@ class CronJob extends Command
             $service->invoices()->where('status', 'pending')->update(['status' => 'cancelled']);
 
             $service->update(['status' => 'cancelled']);
+
+            if ($service->product->stock) {
+                $service->product->increment('stock', $service->quantity);
+            }
 
             $ordersCancelled++;
         });
@@ -141,6 +145,11 @@ class CronJob extends Command
             $service->update(['status' => 'cancelled']);
             // Cancel outstanding invoices
             $service->invoices()->where('status', 'pending')->update(['status' => 'cancelled']);
+
+            if ($service->product->stock) {
+                $service->product->increment('stock', $service->quantity);
+            }
+
             $ordersTerminated++;
         });
         $this->info('Terminating orders if due date is overdue for ' . config('settings.cronjob_order_terminate', 14) . ' days: ' . $ordersTerminated . ' orders');
@@ -173,7 +182,7 @@ class CronJob extends Command
         }
         $user = $invoice->user;
         $credits = $user->credits()->where('currency_code', $invoice->currency_code)->first();
-        if ($credits && $credits->amount >= $invoice->remaining) {
+        if ($invoice->remaining > 0 && $credits && $credits->amount >= $invoice->remaining) {
             $credits->amount -= $invoice->remaining;
             $credits->save();
 

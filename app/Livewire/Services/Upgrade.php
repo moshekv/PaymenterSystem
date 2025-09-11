@@ -4,13 +4,13 @@ namespace App\Livewire\Services;
 
 use App\Classes\Price;
 use App\Events\Invoice\Created as InvoiceCreated;
-use App\Jobs\Server\UpgradeJob;
 use App\Livewire\Component;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\ServiceUpgrade;
 use App\Models\User;
+use App\Services\ServiceUpgrade\ServiceUpgradeService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -139,7 +139,7 @@ class Upgrade extends Component
     public function doUpgrade()
     {
         if (!$this->service->upgradable) {
-            $this->notify('This service is not upgradable.', 'error');
+            $this->notify('This service is not upgradable.', 'error', true);
 
             return $this->redirect(route('services.show', $this->service), true);
         }
@@ -179,33 +179,10 @@ class Upgrade extends Component
         $price = $upgrade->calculatePrice();
 
         if ($price->price <= 0) {
-            $upgrade->status = ServiceUpgrade::STATUS_COMPLETED;
-            $upgrade->save();
-
-            $upgrade->service()->update([
-                'plan_id' => $upgrade->plan_id,
-                'product_id' => $upgrade->product_id,
-            ]);
-
-            // Update the service configs
-            foreach ($upgrade->configs as $config) {
-                $upgrade->service->configs()->updateOrCreate(
-                    ['config_option_id' => $config->config_option_id],
-                    ['config_value_id' => $config->config_value_id]
-                );
-            }
-
-            $this->service->refresh();
-
-            $this->service->recalculatePrice();
-
-            if ($this->service->product->server) {
-                // If the service has a server, dispatch the upgrade job
-                UpgradeJob::dispatch($this->service);
-            }
+            (new ServiceUpgradeService)->handle($upgrade);
 
             if (!config('settings.credits_on_downgrade', true)) {
-                $this->notify('The upgrade has been completed.', 'success');
+                $this->notify('The upgrade has been completed.', 'success', true);
 
                 return $this->redirect(route('services.show', $this->service), true);
             }
@@ -226,9 +203,9 @@ class Upgrade extends Component
             }
 
             if ($price->price < 0) {
-                $this->notify('The upgrade has been completed. We\'ve added the remaining amount to your account balance.', 'success');
+                $this->notify('The upgrade has been completed. We\'ve added the remaining amount to your account balance.', 'success', true);
             } else {
-                $this->notify('The upgrade has been completed.', 'success');
+                $this->notify('The upgrade has been completed.', 'success', true);
             }
 
             return $this->redirect(route('services.show', $this->service), true);
@@ -255,7 +232,7 @@ class Upgrade extends Component
 
         event(new InvoiceCreated($invoice));
 
-        $this->notify('The upgrade has been added to your cart. Please complete the payment to proceed.', 'success');
+        $this->notify('The upgrade has been added to your cart. Please complete the payment to proceed.', 'success', true);
 
         return $this->redirect(route('invoices.show', $invoice));
     }

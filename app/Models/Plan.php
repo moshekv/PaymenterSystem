@@ -21,6 +21,10 @@ class Plan extends Model implements Auditable
         'sort',
     ];
 
+    protected $casts = [
+        'billing_period' => 'integer',
+    ];
+
     /**
      * Get the available prices of the plan.
      */

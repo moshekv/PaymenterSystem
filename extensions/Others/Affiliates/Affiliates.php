@@ -10,6 +10,7 @@ use App\Helpers\ExtensionHelper;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\View;
 use Livewire\Livewire;
@@ -86,6 +87,8 @@ class Affiliates extends Extension
             return $userModel->hasOne(Affiliate::class, 'user_id');
         });
 
+        Gate::policy(Affiliate::class, Policies\AffiliatePolicy::class);
+
         ExtensionHelper::registerMiddleware(AffiliatesMiddleware::class);
 
         // Listen for UserCreated and InvoicePaid events
@@ -103,6 +106,15 @@ class Affiliates extends Extension
         );
 
         Event::listen('api.permissions', function () {
+            return [
+                'admin.affiliates.view' => 'View Affiliates',
+                'admin.affiliates.create' => 'Create Affiliates',
+                'admin.affiliates.update' => 'Update Affiliates',
+                'admin.affiliates.delete' => 'Delete Affiliates',
+            ];
+        });
+
+        Event::listen('permissions', function () {
             return [
                 'admin.affiliates.view' => 'View Affiliates',
                 'admin.affiliates.create' => 'Create Affiliates',
