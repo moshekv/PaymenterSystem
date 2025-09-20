@@ -115,6 +115,9 @@ RUN php artisan down
 # Download the latest release from GitHub.
 RUN curl -L -o paymenter.tar.gz "$URL"
 
+# Delete app folder
+RUN rm -rf app
+
 # Extract the tarball.
 RUN tar -xzf paymenter.tar.gz
 
@@ -123,7 +126,7 @@ RUN rm -f paymenter.tar.gz
 
 
 # Setup correct permissions on the new files.
-RUN chmod -R 755 storage bootstrap/cache
+RUN chmod -R 755 storage bootstrap/cache extensions
 
 # Run the composer install command.
 RUN composer install --no-dev --optimize-autoloader

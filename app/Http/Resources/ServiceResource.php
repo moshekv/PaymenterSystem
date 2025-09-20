@@ -10,6 +10,7 @@ class ServiceResource extends JsonApiResource
         'id',
         'quantity',
         'price',
+        'status',
         'currency_code',
         'expires_at',
         'updated_at',
@@ -22,5 +23,6 @@ class ServiceResource extends JsonApiResource
         'order' => OrderResource::class,
         'product' => ProductResource::class,
         'invoices' => InvoiceResource::class,
+        'property' => PropertyResource::class,
     ];
 }
